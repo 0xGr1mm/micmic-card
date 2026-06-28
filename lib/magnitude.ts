@@ -1,0 +1,143 @@
+export interface MagnitudeTier {
+  level: number;
+  name: string;
+  label: string;
+  color: string;
+  glow: string;
+  bgGradient: string;
+  cardBg: string;
+  borderColor: string;
+  accentColor: string;
+  richterColor: string;
+  description: string;
+  perks: string[];
+  particleCount: number;
+  glitchEffect: boolean;
+  crackIntensity: number; // 1-5
+}
+
+export const MAGNITUDE_TIERS: MagnitudeTier[] = [
+  {
+    level: 1,
+    name: "Micro",
+    label: "Magnitude 1 — Micro",
+    color: "#9B9B9B",
+    glow: "rgba(155, 155, 155, 0.35)",
+    bgGradient: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1f1f1f 100%)",
+    cardBg: "linear-gradient(135deg, #111111 0%, #1e1e1e 40%, #2a2020 100%)",
+    borderColor: "rgba(155, 155, 155, 0.3)",
+    accentColor: "#9B9B9B",
+    richterColor: "#9B9B9B",
+    description: "The beginning of the seismic journey",
+    perks: ["Community Access", "Seismic Explorer"],
+    particleCount: 3,
+    glitchEffect: false,
+    crackIntensity: 1,
+  },
+  {
+    level: 2,
+    name: "Minor",
+    label: "Magnitude 2 — Minor",
+    color: "#4CAF8A",
+    glow: "rgba(76, 175, 138, 0.35)",
+    bgGradient: "linear-gradient(135deg, #0a1f18 0%, #0f2e22 50%, #1a2820 100%)",
+    cardBg: "linear-gradient(135deg, #080f0c 0%, #112019 40%, #1a2820 100%)",
+    borderColor: "rgba(76, 175, 138, 0.35)",
+    accentColor: "#4CAF8A",
+    richterColor: "#4CAF8A",
+    description: "Tremors felt. Signal recognized.",
+    perks: ["Community Access", "Early Signals", "Seismic Insider"],
+    particleCount: 6,
+    glitchEffect: false,
+    crackIntensity: 1,
+  },
+  {
+    level: 3,
+    name: "Light",
+    label: "Magnitude 3 — Light",
+    color: "#5B9BD5",
+    glow: "rgba(91, 155, 213, 0.4)",
+    bgGradient: "linear-gradient(135deg, #0a1525 0%, #0f1f35 50%, #151f30 100%)",
+    cardBg: "linear-gradient(135deg, #080d1a 0%, #0e1928 40%, #1a2035 100%)",
+    borderColor: "rgba(91, 155, 213, 0.35)",
+    accentColor: "#5B9BD5",
+    richterColor: "#5B9BD5",
+    description: "Fault lines traced. Impact incoming.",
+    perks: ["Community Access", "Early Signals", "Deeper Access", "Seismic Contributor"],
+    particleCount: 9,
+    glitchEffect: false,
+    crackIntensity: 2,
+  },
+  {
+    level: 4,
+    name: "Moderate",
+    label: "Magnitude 4 — Moderate",
+    color: "#9B59B6",
+    glow: "rgba(155, 89, 182, 0.45)",
+    bgGradient: "linear-gradient(135deg, #1a0a25 0%, #250f35 50%, #1f1530 100%)",
+    cardBg: "linear-gradient(135deg, #0f0818 0%, #1a0f28 40%, #220f30 100%)",
+    borderColor: "rgba(155, 89, 182, 0.4)",
+    accentColor: "#9B59B6",
+    richterColor: "#9B59B6",
+    description: "The ground shifts. You're at the epicenter.",
+    perks: ["All Previous", "Governance Voice", "Priority Features", "Seismic Pioneer"],
+    particleCount: 14,
+    glitchEffect: false,
+    crackIntensity: 3,
+  },
+  {
+    level: 5,
+    name: "Strong",
+    label: "Magnitude 5 — Strong",
+    color: "#E67E22",
+    glow: "rgba(230, 126, 34, 0.5)",
+    bgGradient: "linear-gradient(135deg, #251200 0%, #351800 50%, #2a1800 100%)",
+    cardBg: "linear-gradient(135deg, #180c00 0%, #251200 40%, #301500 100%)",
+    borderColor: "rgba(230, 126, 34, 0.45)",
+    accentColor: "#E67E22",
+    richterColor: "#E67E22",
+    description: "Shockwaves radiate. Your influence spreads.",
+    perks: ["All Previous", "Alpha Access", "Private Channels", "Seismic Force"],
+    particleCount: 20,
+    glitchEffect: false,
+    crackIntensity: 4,
+  },
+  {
+    level: 6,
+    name: "Very Strong",
+    label: "Magnitude 6 — Very Strong",
+    color: "#E74C3C",
+    glow: "rgba(231, 76, 60, 0.55)",
+    bgGradient: "linear-gradient(135deg, #250505 0%, #350a0a 50%, #2a0808 100%)",
+    cardBg: "linear-gradient(135deg, #180303 0%, #250505 40%, #300808 100%)",
+    borderColor: "rgba(231, 76, 60, 0.5)",
+    accentColor: "#E74C3C",
+    richterColor: "#E74C3C",
+    description: "Structures bend. You are the fault.",
+    perks: ["All Previous", "Core Circle", "Direct Team Access", "Seismic Architect"],
+    particleCount: 28,
+    glitchEffect: true,
+    crackIntensity: 5,
+  },
+  {
+    level: 7,
+    name: "Major",
+    label: "Magnitude 7 — Major",
+    color: "#F1C40F",
+    glow: "rgba(241, 196, 15, 0.6)",
+    bgGradient: "linear-gradient(135deg, #1a1500 0%, #252000 50%, #1f1a00 100%)",
+    cardBg: "linear-gradient(135deg, #0f0c00 0%, #1a1500 40%, #252000 100%)",
+    borderColor: "rgba(241, 196, 15, 0.55)",
+    accentColor: "#F1C40F",
+    richterColor: "#F1C40F",
+    description: "Legendary seismic event. Everything changes.",
+    perks: ["All Previous", "OG Status", "Founding Circle", "Seismic Legend"],
+    particleCount: 40,
+    glitchEffect: true,
+    crackIntensity: 5,
+  },
+];
+
+export function getTierByLevel(level: number): MagnitudeTier {
+  return MAGNITUDE_TIERS.find(t => t.level === level) ?? MAGNITUDE_TIERS[0];
+}

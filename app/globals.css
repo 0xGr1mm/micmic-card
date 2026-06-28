@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+:root {
+  --seismic-deep: #3D2831;
+  --seismic-dark: #4e2d3a;
+  --seismic-mid: #7a5560;
+  --seismic-light: #c4a0ab;
+  --seismic-pale: #f5eef0;
+  --seismic-accent: #825A6D;
+  --seismic-glow: rgba(196, 160, 171, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--seismic-deep);
+  color: var(--seismic-pale);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Seismic tectonic crack background */
+.seismic-bg {
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(130, 90, 109, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(78, 45, 58, 0.2) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(61, 40, 49, 0.3) 0%, transparent 60%),
+    #3D2831;
+}
+
+/* Crack lines overlay */
+.crack-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(23deg, transparent 48%, rgba(196, 160, 171, 0.04) 49%, rgba(196, 160, 171, 0.04) 51%, transparent 52%),
+    linear-gradient(78deg, transparent 48%, rgba(130, 90, 109, 0.03) 49%, rgba(130, 90, 109, 0.03) 51%, transparent 52%),
+    linear-gradient(143deg, transparent 47%, rgba(196, 160, 171, 0.02) 48%, rgba(196, 160, 171, 0.02) 50%, transparent 51%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Magnitude tier colors */
+.mag-1 { --mag-color: #9B9B9B; --mag-glow: rgba(155, 155, 155, 0.4); --mag-name: "Micro"; }
+.mag-2 { --mag-color: #4CAF8A; --mag-glow: rgba(76, 175, 138, 0.4); --mag-name: "Minor"; }
+.mag-3 { --mag-color: #5B9BD5; --mag-glow: rgba(91, 155, 213, 0.4); --mag-name: "Light"; }
+.mag-4 { --mag-color: #9B59B6; --mag-glow: rgba(155, 89, 182, 0.4); --mag-name: "Moderate"; }
+.mag-5 { --mag-color: #E67E22; --mag-glow: rgba(230, 126, 34, 0.5); --mag-name: "Strong"; }
+.mag-6 { --mag-color: #E74C3C; --mag-glow: rgba(231, 76, 60, 0.5); --mag-name: "Very Strong"; }
+.mag-7 { --mag-color: #F1C40F; --mag-glow: rgba(241, 196, 15, 0.6); --mag-name: "Major"; }
+
+/* Glitch animation for mag 6-7 */
+@keyframes glitch {
+  0%, 90%, 100% { transform: translate(0); filter: none; }
+  91% { transform: translate(-2px, 1px); filter: hue-rotate(10deg); }
+  93% { transform: translate(2px, -1px); filter: hue-rotate(-10deg); }
+  95% { transform: translate(-1px, 2px); filter: brightness(1.2); }
+}
+
+@keyframes seismic-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+@keyframes crack-in {
+  from { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 0; }
+  to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); opacity: 1; }
+}
+
+@keyframes fault-line {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes float-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes richter-bounce {
+  0%, 100% { transform: scaleX(1); }
+  10% { transform: scaleX(0.95) translateX(-3px); }
+  20% { transform: scaleX(1.05) translateX(5px); }
+  30% { transform: scaleX(0.97) translateX(-2px); }
+  40% { transform: scaleX(1.02) translateX(3px); }
+  50% { transform: scaleX(0.99); }
+}
+
+.animate-float-up { animation: float-up 0.6s ease-out forwards; }
+.animate-seismic-pulse { animation: seismic-pulse 3s ease-in-out infinite; }
+.animate-glitch { animation: glitch 4s ease-in-out infinite; }
+.animate-richter { animation: richter-bounce 0.6s ease-out; }
+
+/* Card specific */
+.micmic-card {
+  background: linear-gradient(135deg, #1a0f14 0%, #2d1820 40%, #3D2831 100%);
+  border: 1px solid rgba(130, 90, 109, 0.4);
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.micmic-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 60%, rgba(130, 90, 109, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* Seismograph line */
+.seismograph-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: fault-line 2s ease-out forwards;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed rgba(196, 160, 171, 0.3);
+  transition: all 0.3s ease;
+  background: rgba(130, 90, 109, 0.05);
+}
+
+.upload-zone:hover, .upload-zone.drag-active {
+  border-color: rgba(196, 160, 171, 0.8);
+  background: rgba(130, 90, 109, 0.15);
+  box-shadow: 0 0 30px rgba(130, 90, 109, 0.2);
+}
+
+/* Magnitude selector */
+.mag-option {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.mag-option:hover {
+  transform: translateY(-2px);
+  border-color: rgba(196, 160, 171, 0.5);
+}
+
+.mag-option.selected {
+  border-color: var(--mag-color, #825A6D);
+  box-shadow: 0 0 20px var(--mag-glow, rgba(130, 90, 109, 0.4));
+  transform: translateY(-3px);
+}
+
+/* Richter scale number */
+.richter-number {
+  font-size: 5rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #825A6D, #4e2d3a);
+  border: 1px solid rgba(196, 160, 171, 0.3);
+  color: #f5eef0;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #9B6B80, #5e3545);
+  box-shadow: 0 0 30px rgba(130, 90, 109, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toast */
+.toast {
+  animation: float-up 0.3s ease-out forwards;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #3D2831; }
+::-webkit-scrollbar-thumb { background: #825A6D; border-radius: 3px; }
