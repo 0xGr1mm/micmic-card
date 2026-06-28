@@ -2,129 +2,119 @@
 import React from "react";
 import { MAGNITUDE_TIERS } from "@/lib/magnitude";
 
-interface MagnitudeSelectorProps {
-  selected: number;
-  onChange: (level: number) => void;
-}
+interface Props { selected: number; onChange: (n: number) => void; }
 
-const MAG_ICONS = ["🔵", "🟢", "🔷", "🟣", "🟠", "🔴", "⭐"];
-const RICHTER_DESC = ["1.0–1.9", "2.0–2.9", "3.0–3.9", "4.0–4.9", "5.0–5.9", "6.0–6.9", "7.0+"];
+const ICONS = ["◈","◉","◆","◈","◉","◆","★"];
+const RICHTER = ["1–2","2–3","3–4","4–5","5–6","6–7","7+"];
 
-export default function MagnitudeSelector({ selected, onChange }: MagnitudeSelectorProps) {
+export default function MagnitudeSelector({ selected, onChange }: Props) {
+  const tier = MAGNITUDE_TIERS.find(t => t.level === selected);
+
   return (
-    <div className="space-y-3">
-      <label
-        style={{
-          color: "#c4a0ab",
-          fontSize: "11px",
-          fontFamily: "'Space Mono', monospace",
-          letterSpacing: "0.15em",
-          display: "block",
-        }}
-      >
-        SELECT YOUR MAGNITUDE TIER
-      </label>
+    <div className="space-y-4">
+      <p className="eyebrow">your magnitude tier</p>
 
+      {/* Grid */}
       <div className="grid grid-cols-7 gap-2">
-        {MAGNITUDE_TIERS.map((tier) => (
+        {MAGNITUDE_TIERS.map((t) => (
           <button
-            key={tier.level}
-            onClick={() => onChange(tier.level)}
-            className={`mag-option rounded-xl p-2 flex flex-col items-center gap-1 ${selected === tier.level ? "selected" : ""}`}
-            style={{
-              background: selected === tier.level
-                ? `${tier.color}15`
-                : "rgba(130, 90, 109, 0.05)",
-              border: `2px solid ${selected === tier.level ? tier.color : "rgba(130, 90, 109, 0.2)"}`,
-              boxShadow: selected === tier.level ? `0 0 16px ${tier.glow}` : "none",
-            } as React.CSSProperties}
+            key={t.level}
+            onClick={() => onChange(t.level)}
+            className={`mag-btn mag-${t.level}-color rounded-xl py-3 px-1 flex flex-col items-center gap-1.5 ${selected === t.level ? "active" : ""}`}
+            style={{ "--mc": t.color, "--mg": t.glow } as React.CSSProperties}
           >
-            <span style={{ fontSize: "18px" }}>{MAG_ICONS[tier.level - 1]}</span>
-            <span
-              style={{
-                color: selected === tier.level ? tier.color : "#7a5560",
-                fontSize: "16px",
-                fontWeight: 900,
-                fontFamily: "Inter, sans-serif",
-                lineHeight: 1,
-              }}
-            >
-              {tier.level}
-            </span>
-            <span
-              style={{
-                color: selected === tier.level ? tier.color : "#7a5560",
-                fontSize: "8px",
-                fontFamily: "'Space Mono', monospace",
-                letterSpacing: "0.03em",
-                textAlign: "center",
-                lineHeight: 1.2,
-              }}
-            >
-              {tier.name.toUpperCase()}
-            </span>
+            <span style={{
+              color: selected === t.level ? t.color : "rgba(196,160,171,0.3)",
+              fontSize: "11px",
+              transition: "color 0.2s"
+            }}>{ICONS[t.level - 1]}</span>
+
+            <span style={{
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 900,
+              fontSize: "20px",
+              lineHeight: 1,
+              color: selected === t.level ? t.color : "rgba(196,160,171,0.4)",
+              textShadow: selected === t.level ? `0 0 20px ${t.color}` : "none",
+              transition: "all 0.2s",
+            }}>{t.level}</span>
+
+            <span style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: "7px",
+              letterSpacing: "0.05em",
+              color: selected === t.level ? t.color : "rgba(196,160,171,0.25)",
+              textTransform: "uppercase",
+              transition: "color 0.2s",
+            }}>{t.name}</span>
           </button>
         ))}
       </div>
 
-      {/* Selected tier detail */}
-      {selected > 0 && (() => {
-        const tier = MAGNITUDE_TIERS.find(t => t.level === selected)!;
-        return (
-          <div
-            className="rounded-xl p-4 transition-all"
-            style={{
-              background: `${tier.color}08`,
-              border: `1px solid ${tier.color}30`,
-            }}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div
-                style={{
-                  fontSize: "28px",
-                  fontWeight: 900,
-                  color: tier.color,
-                  fontFamily: "Inter, sans-serif",
-                  lineHeight: 1,
-                  textShadow: `0 0 20px ${tier.glow}`,
-                }}
-              >
-                {tier.level}
-              </div>
-              <div>
-                <div style={{ color: tier.color, fontWeight: 700, fontSize: "14px", fontFamily: "Inter, sans-serif" }}>
-                  {tier.name} Tier
-                </div>
-                <div style={{ color: "#7a5560", fontSize: "11px", fontFamily: "'Space Mono', monospace" }}>
-                  Richter {RICHTER_DESC[tier.level - 1]}
-                </div>
-              </div>
-            </div>
-            <div style={{ color: "#c4a0ab", fontSize: "12px", fontStyle: "italic", marginBottom: "8px" }}>
-              &ldquo;{tier.description}&rdquo;
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {tier.perks.map((perk) => (
-                <span
-                  key={perk}
-                  style={{
-                    background: `${tier.color}15`,
-                    border: `1px solid ${tier.color}40`,
-                    color: tier.color,
-                    fontSize: "9px",
-                    fontFamily: "'Space Mono', monospace",
-                    padding: "2px 8px",
-                    borderRadius: "100px",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  {perk}
-                </span>
-              ))}
+      {/* Detail card */}
+      {tier && (
+        <div
+          className="rounded-2xl p-4 transition-all duration-300"
+          style={{
+            background: `linear-gradient(135deg, ${tier.color}0a 0%, transparent 100%)`,
+            border: `1px solid ${tier.color}25`,
+          }}
+        >
+          <div className="flex items-center gap-4">
+            {/* Big number */}
+            <div style={{
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 900,
+              fontSize: "52px",
+              lineHeight: 1,
+              color: tier.color,
+              textShadow: `0 0 30px ${tier.color}80, 0 0 60px ${tier.color}30`,
+              letterSpacing: "-0.03em",
+              minWidth: "52px",
+            }}>{tier.level}</div>
+
+            <div className="flex-1">
+              <div style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 700,
+                fontSize: "15px",
+                color: tier.color,
+                marginBottom: "2px",
+              }}>{tier.name} Tier</div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: "10px",
+                color: "rgba(196,160,171,0.45)",
+                marginBottom: "8px",
+                letterSpacing: "0.1em",
+              }}>RICHTER {RICHTER[tier.level - 1]}</div>
+              <div style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "12px",
+                fontStyle: "italic",
+                color: "rgba(196,160,171,0.6)",
+                lineHeight: 1.5,
+              }}>&ldquo;{tier.description}&rdquo;</div>
             </div>
           </div>
-        );
-      })()}
+
+          {/* Perks */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {tier.perks.map((p) => (
+              <span key={p} style={{
+                background: `${tier.color}12`,
+                border: `1px solid ${tier.color}30`,
+                color: tier.color,
+                fontFamily: "'Space Mono', monospace",
+                fontSize: "9px",
+                letterSpacing: "0.05em",
+                padding: "3px 10px",
+                borderRadius: "100px",
+              }}>{p}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

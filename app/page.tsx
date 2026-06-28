@@ -1,28 +1,30 @@
 "use client";
 import React, { useState, useRef } from "react";
-import { Upload, Download, Link, Check, Loader2, Waves, ChevronRight } from "lucide-react";
+import { Upload, Download, Link, Check, Loader2, ChevronRight, RotateCcw } from "lucide-react";
 import { getTierByLevel } from "@/lib/magnitude";
 import MicMicCard from "@/components/MicMicCard";
 import MagnitudeSelector from "@/components/MagnitudeSelector";
 import { SeismicIcon } from "@/components/SeismicLogo";
+import dynamic from "next/dynamic";
 
-type Step = "form" | "preview" | "done";
+const SeismicCanvas = dynamic(() => import("@/components/SeismicCanvas"), { ssr: false });
+
+type Step = "form" | "preview";
 
 export default function Home() {
   const [step, setStep] = useState<Step>("form");
   const [username, setUsername] = useState("");
   const [magnitude, setMagnitude] = useState(3);
   const [pfpFile, setPfpFile] = useState<File | null>(null);
-  const [pfpPreview, setPfpPreview] = useState<string>("");
+  const [pfpPreview, setPfpPreview] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [cardId, setCardId] = useState<string>("");
-  const [cardPfpUrl, setCardPfpUrl] = useState<string>("");
+  const [cardId, setCardId] = useState("");
+  const [cardPfpUrl, setCardPfpUrl] = useState("");
   const [copied, setCopied] = useState(false);
-  const [toast, setToast] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-
+  const [toast, setToast] = useState("");
+  const mounted = true;
+  const fileRef = useRef<HTMLInputElement>(null);
   const tier = getTierByLevel(magnitude);
 
   const showToast = (msg: string) => {
@@ -31,47 +33,35 @@ export default function Home() {
   };
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      showToast("Please upload an image file");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      showToast("Image must be under 10MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { showToast("Image files only"); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast("Max 10MB"); return; }
     setPfpFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => setPfpPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    const r = new FileReader();
+    r.onload = (e) => setPfpPreview(e.target?.result as string);
+    r.readAsDataURL(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   };
 
   const handleSubmit = async () => {
-    if (!username.trim() || !pfpFile || !magnitude) return;
-
+    if (!username.trim() || !pfpFile) return;
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("username", username.trim());
-      formData.append("magnitude", magnitude.toString());
-      formData.append("pfp", pfpFile);
-
-      const res = await fetch("/api/cards", { method: "POST", body: formData });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Failed");
-
-      setCardId(data.cardId);
-      setCardPfpUrl(data.pfpUrl);
+      const fd = new FormData();
+      fd.append("username", username.trim());
+      fd.append("magnitude", magnitude.toString());
+      fd.append("pfp", pfpFile);
+      const res = await fetch("/api/cards", { method: "POST", body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setCardId(d.cardId);
+      setCardPfpUrl(d.pfpUrl);
       setStep("preview");
-    } catch (err) {
-      console.error(err);
+    } catch {
       showToast("Something went wrong. Try again.");
     } finally {
       setIsLoading(false);
@@ -79,237 +69,224 @@ export default function Home() {
   };
 
   const handleDownload = async () => {
+    const el = document.getElementById("micmic-card-render");
+    if (!el) return;
     try {
-      const el = document.getElementById("micmic-card-render");
-      if (!el) return;
-
       const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(el, {
-        backgroundColor: null,
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
-
-      const link = document.createElement("a");
-      link.download = `micmic-card-${username}-mag${magnitude}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      showToast("Card downloaded!");
-    } catch (err) {
-      console.error(err);
-      showToast("Download failed. Try again.");
-    }
+      const canvas = await html2canvas(el, { backgroundColor: null, scale: 3, useCORS: true, logging: false });
+      const a = document.createElement("a");
+      a.download = `micmic-${username}-mag${magnitude}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+      showToast("Downloaded ✓");
+    } catch { showToast("Download failed"); }
   };
 
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/card/${cardId}`;
-    navigator.clipboard.writeText(url);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/card/${cardId}`);
     setCopied(true);
-    showToast("Link copied!");
-    setTimeout(() => setCopied(false), 2000);
+    showToast("Link copied ✓");
+    setTimeout(() => setCopied(false), 2500);
   };
 
-  const shareOnX = () => {
+  const shareX = () => {
     const url = `${window.location.origin}/card/${cardId}`;
-    const text = `i'm a Magnitude ${magnitude} on Seismic — ${tier.name} Tier\n\n${tier.description}\n\nget yours 👇`;
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-      "_blank"
-    );
+    const text = `i'm magnitude ${magnitude} on seismic — ${tier.name.toLowerCase()} tier\n\n"${tier.description}"\n\nget yours 👇`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
   };
+
+  const reset = () => {
+    setStep("form");
+    setPfpFile(null);
+    setPfpPreview("");
+    setUsername("");
+    setCardId("");
+    setCardPfpUrl("");
+  };
+
+  const canGenerate = username.trim().length > 0 && !!pfpFile && !isLoading;
 
   return (
-    <main className="relative z-10 min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: "rgba(130, 90, 109, 0.2)" }}>
-        <div className="flex items-center gap-3">
-          <SeismicIcon size={28} color="#825A6D" />
-          <div>
-            <div style={{ color: "#f5eef0", fontWeight: 800, fontSize: "18px", fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
-              MicMic Card
+    <>
+      <SeismicCanvas />
+
+      <div className="page-content min-h-screen flex flex-col">
+        {/* ── HEADER ── */}
+        <header style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "20px 32px",
+          borderBottom: "1px solid rgba(196,160,171,0.08)",
+        }}>
+          <div className="flex items-center gap-3">
+            <div className="anim-pulse">
+              <SeismicIcon size={30} color="#9B6B80" />
             </div>
-            <div style={{ color: "#7a5560", fontSize: "11px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.1em" }}>
-              SEISMIC IDENTITY
+            <div>
+              <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 800, fontSize: "17px", color: "#f0e6ea", lineHeight: 1 }}>
+                MicMic Card
+              </div>
+              <div className="eyebrow" style={{ marginTop: "1px" }}>Seismic Identity</div>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <div className="animate-seismic-pulse" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E74C3C" }} />
-          <span style={{ color: "#7a5560", fontSize: "11px", fontFamily: "'Space Mono', monospace" }}>TESTNET LIVE</span>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <div className="text-center py-12 px-4" style={{ borderBottom: "1px solid rgba(130, 90, 109, 0.15)" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "rgba(130, 90, 109, 0.1)",
-            border: "1px solid rgba(130, 90, 109, 0.3)",
-            borderRadius: "100px",
-            padding: "6px 16px",
-            marginBottom: "20px",
-          }}
-        >
-          <Waves size={12} color="#825A6D" />
-          <span style={{ color: "#825A6D", fontSize: "11px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.12em" }}>
-            GENERATE YOUR SEISMIC IDENTITY
-          </span>
-        </div>
-
-        <h1
-          style={{
-            fontSize: "clamp(32px, 5vw, 56px)",
-            fontWeight: 900,
-            fontFamily: "Inter, sans-serif",
-            color: "#f5eef0",
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
-            marginBottom: "12px",
-          }}
-        >
-          Your Magnitude.
-          <br />
-          <span style={{ color: "#825A6D" }}>Your Card.</span>
-        </h1>
-
-        <p style={{ color: "#7a5560", fontSize: "15px", fontFamily: "Inter, sans-serif", maxWidth: "480px", margin: "0 auto" }}>
-          Upload your PFP, pick your Magnitude tier, and get a unique MicMic Card you can flex on X.
-        </p>
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-start px-4 py-10 gap-10">
-
-        {step === "form" && (
-          <div className="w-full max-w-2xl space-y-8 animate-float-up">
-
-            {/* PFP Upload */}
-            <div className="space-y-3">
-              <label style={{ color: "#c4a0ab", fontSize: "11px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.15em", display: "block" }}>
-                UPLOAD YOUR PFP
-              </label>
-
-              <div
-                className={`upload-zone rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${isDragging ? "drag-active" : ""}`}
-                style={{ height: "160px" }}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-              >
-                {pfpPreview ? (
-                  <div className="flex items-center gap-5">
-                    <div style={{ width: "80px", height: "80px", borderRadius: "50%", overflow: "hidden", border: `2px solid ${tier.color}`, boxShadow: `0 0 20px ${tier.glow}` }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={pfpPreview} alt="PFP" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
-                    <div>
-                      <div style={{ color: "#f5eef0", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>PFP ready</div>
-                      <div style={{ color: "#7a5560", fontSize: "12px", fontFamily: "'Space Mono', monospace" }}>Click to change</div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Upload size={28} color="#7a5560" style={{ marginBottom: "10px" }} />
-                    <div style={{ color: "#c4a0ab", fontFamily: "Inter, sans-serif", fontWeight: 500 }}>Drop your PFP here</div>
-                    <div style={{ color: "#7a5560", fontSize: "12px", fontFamily: "'Space Mono', monospace", marginTop: "4px" }}>PNG, JPG, GIF · max 10MB</div>
-                  </>
-                )}
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
-            </div>
-
-            {/* Username */}
-            <div className="space-y-3">
-              <label style={{ color: "#c4a0ab", fontSize: "11px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.15em", display: "block" }}>
-                YOUR USERNAME
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. 0xGr1mm"
-                maxLength={32}
-                style={{
-                  width: "100%",
-                  background: "rgba(130, 90, 109, 0.08)",
-                  border: `1px solid ${username ? tier.color + "50" : "rgba(130, 90, 109, 0.2)"}`,
-                  borderRadius: "12px",
-                  padding: "14px 18px",
-                  color: "#f5eef0",
-                  fontFamily: "'Space Mono', monospace",
-                  fontSize: "16px",
-                  outline: "none",
-                  transition: "all 0.2s",
-                  boxShadow: username ? `0 0 20px ${tier.glow}20` : "none",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = tier.color + "80")}
-                onBlur={(e) => (e.target.style.borderColor = username ? tier.color + "50" : "rgba(130, 90, 109, 0.2)")}
-              />
-            </div>
-
-            {/* Magnitude Selector */}
-            <MagnitudeSelector selected={magnitude} onChange={setMagnitude} />
-
-            {/* Live preview mini */}
-            {pfpPreview && username && (
-              <div className="space-y-3">
-                <label style={{ color: "#c4a0ab", fontSize: "11px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.15em" }}>
-                  PREVIEW
-                </label>
-                <div className="flex justify-center overflow-hidden" style={{ borderRadius: "16px" }}>
-                  <div style={{ transform: "scale(0.68)", transformOrigin: "top center", marginBottom: "-60px" }}>
-                    <MicMicCard username={username} magnitude={getTierByLevel(magnitude)} pfpUrl={pfpPreview} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Submit */}
-            <button
-              className="btn-primary w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-              style={{ fontSize: "15px", fontFamily: "Inter, sans-serif" }}
-              onClick={handleSubmit}
-              disabled={!username.trim() || !pfpFile || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  Generating your card...
-                </>
-              ) : (
-                <>
-                  Generate My MicMic Card
-                  <ChevronRight size={18} />
-                </>
-              )}
-            </button>
+          <div style={{
+            display: "flex", alignItems: "center", gap: "8px",
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: "100px", padding: "5px 12px",
+          }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444", display: "block" }}
+              className="anim-pulse" />
+            <span className="eyebrow" style={{ color: "rgba(239,68,68,0.7)" }}>Testnet Live</span>
           </div>
-        )}
+        </header>
 
-        {step === "preview" && (
-          <div className="w-full max-w-2xl space-y-8 animate-float-up">
-            <div className="text-center">
-              <div style={{ color: tier.color, fontSize: "13px", fontFamily: "'Space Mono', monospace", letterSpacing: "0.15em", marginBottom: "8px" }}>
-                ▸ CARD GENERATED
-              </div>
-              <h2 style={{ color: "#f5eef0", fontSize: "28px", fontWeight: 900, fontFamily: "Inter, sans-serif", marginBottom: "4px" }}>
-                Here&apos;s your MicMic Card
-              </h2>
-              <p style={{ color: "#7a5560", fontSize: "13px", fontFamily: "Inter, sans-serif" }}>
-                Download as PNG or share your unique link
+        {/* ── MAIN ── */}
+        <main style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", padding: "0 16px 60px" }}>
+
+          {/* Hero */}
+          {step === "form" && (
+            <div style={{ textAlign: "center", padding: "56px 0 48px", maxWidth: "560px" }}
+              className={mounted ? "anim-fade-up" : ""}>
+              <div className="eyebrow" style={{ marginBottom: "16px" }}>Generate your seismic identity</div>
+
+              <h1 style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 900,
+                fontSize: "clamp(38px, 6vw, 64px)",
+                lineHeight: 1.02,
+                letterSpacing: "-0.03em",
+                marginBottom: "16px",
+              }}>
+                <span style={{ color: "#f0e6ea" }}>Your Magnitude.</span>
+                <br />
+                <span className="shimmer-text">Your Card.</span>
+              </h1>
+
+              <p style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "15px",
+                color: "rgba(196,160,171,0.6)",
+                lineHeight: 1.6,
+              }}>
+                Upload your PFP, pick your tier,<br />get a card you can flex on X.
               </p>
             </div>
+          )}
 
-            {/* Card render */}
-            <div className="flex justify-center" style={{ overflowX: "auto" }}>
-              <div ref={cardRef}>
+          {step === "preview" && (
+            <div style={{ textAlign: "center", padding: "48px 0 36px" }} className="anim-fade-up">
+              <div className="eyebrow" style={{ marginBottom: "10px", color: tier.color }}>card generated</div>
+              <h2 style={{
+                fontFamily: "Inter, sans-serif", fontWeight: 800, fontSize: "32px",
+                color: "#f0e6ea", letterSpacing: "-0.02em",
+              }}>Here&apos;s your MicMic Card</h2>
+            </div>
+          )}
+
+          {/* ── FORM ── */}
+          {step === "form" && (
+            <div style={{ width: "100%", maxWidth: "560px", display: "flex", flexDirection: "column", gap: "28px" }}
+              className="anim-fade-up">
+
+              {/* Upload */}
+              <div>
+                <p className="eyebrow" style={{ marginBottom: "10px" }}>your pfp</p>
+                <div
+                  className={`upload-zone rounded-2xl flex flex-col items-center justify-center ${isDragging ? "drag-active" : ""}`}
+                  style={{ height: "148px", borderRadius: "16px" }}
+                  onClick={() => fileRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={onDrop}
+                >
+                  {pfpPreview ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                      <div style={{
+                        width: "72px", height: "72px", borderRadius: "50%", overflow: "hidden",
+                        border: `2px solid ${tier.color}`,
+                        boxShadow: `0 0 24px ${tier.color}50`,
+                      }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={pfpPreview} alt="PFP" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: "14px", color: "#f0e6ea" }}>
+                          PFP ready
+                        </div>
+                        <div className="eyebrow" style={{ marginTop: "3px" }}>tap to change</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ marginBottom: "10px", opacity: 0.4 }}>
+                        <Upload size={24} color="#c4a0ab" />
+                      </div>
+                      <div style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: "14px", color: "rgba(196,160,171,0.7)" }}>
+                        Drop your PFP here
+                      </div>
+                      <div className="eyebrow" style={{ marginTop: "5px" }}>PNG · JPG · GIF · max 10MB</div>
+                    </>
+                  )}
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+              </div>
+
+              {/* Username */}
+              <div>
+                <p className="eyebrow" style={{ marginBottom: "10px" }}>your username</p>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="0xYourHandle"
+                  maxLength={32}
+                  className="s-input w-full"
+                  style={{ borderRadius: "14px", padding: "14px 18px", fontSize: "16px", letterSpacing: "0.02em" }}
+                  onKeyDown={(e) => e.key === "Enter" && canGenerate && handleSubmit()}
+                />
+              </div>
+
+              {/* Magnitude */}
+              <MagnitudeSelector selected={magnitude} onChange={setMagnitude} />
+
+              {/* Live preview */}
+              {pfpPreview && username && (
+                <div>
+                  <p className="eyebrow" style={{ marginBottom: "12px" }}>preview</p>
+                  <div style={{
+                    display: "flex", justifyContent: "center",
+                    overflow: "hidden", borderRadius: "14px",
+                  }}>
+                    <div style={{ transform: "scale(0.62)", transformOrigin: "top center", marginBottom: "-104px" }}>
+                      <MicMicCard username={username} magnitude={getTierByLevel(magnitude)} pfpUrl={pfpPreview} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CTA */}
+              <button
+                className="btn-primary w-full flex items-center justify-center gap-2"
+                style={{ padding: "16px", borderRadius: "16px", fontSize: "16px", fontFamily: "Inter, sans-serif" }}
+                onClick={handleSubmit}
+                disabled={!canGenerate}
+              >
+                {isLoading
+                  ? <><Loader2 size={18} className="animate-spin" /> Generating your card…</>
+                  : <>Generate My MicMic Card <ChevronRight size={17} /></>
+                }
+              </button>
+            </div>
+          )}
+
+          {/* ── PREVIEW ── */}
+          {step === "preview" && (
+            <div style={{ width: "100%", maxWidth: "560px", display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}
+              className="anim-fade-up">
+
+              {/* Card */}
+              <div style={{ overflowX: "auto", maxWidth: "100vw", paddingBottom: "4px" }}>
                 <MicMicCard
                   username={username}
                   magnitude={tier}
@@ -317,88 +294,84 @@ export default function Home() {
                   cardId={cardId}
                 />
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="grid grid-cols-2 gap-3">
+              {/* Action buttons */}
+              <div style={{ width: "100%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <button className="btn-primary flex items-center justify-center gap-2"
+                  style={{ padding: "13px", borderRadius: "14px", fontSize: "14px", fontFamily: "Inter, sans-serif" }}
+                  onClick={handleDownload}>
+                  <Download size={15} /> Download PNG
+                </button>
+
+                <button className="btn-ghost flex items-center justify-center gap-2"
+                  style={{ padding: "13px", borderRadius: "14px", fontSize: "14px", fontFamily: "Inter, sans-serif" }}
+                  onClick={handleCopy}>
+                  {copied ? <Check size={15} /> : <Link size={15} />}
+                  {copied ? "Copied!" : "Copy Link"}
+                </button>
+              </div>
+
+              {/* Share on X */}
               <button
-                className="btn-primary py-3 rounded-xl flex items-center justify-center gap-2"
-                style={{ fontSize: "14px", fontFamily: "Inter, sans-serif" }}
-                onClick={handleDownload}
-              >
-                <Download size={16} />
-                Download PNG
-              </button>
-              <button
-                onClick={handleCopyLink}
-                className="py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+                onClick={shareX}
                 style={{
-                  background: copied ? `${tier.color}20` : "rgba(130, 90, 109, 0.1)",
-                  border: `1px solid ${copied ? tier.color : "rgba(130, 90, 109, 0.3)"}`,
-                  color: copied ? tier.color : "#c4a0ab",
-                  fontSize: "14px",
-                  fontFamily: "Inter, sans-serif",
-                  cursor: "pointer",
+                  width: "100%", padding: "13px", borderRadius: "14px",
+                  background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.08)",
+                  color: "#f0e6ea", fontSize: "14px", fontFamily: "Inter, sans-serif",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.18)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
               >
-                {copied ? <Check size={16} /> : <Link size={16} />}
-                {copied ? "Copied!" : "Copy Link"}
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                Share on X
               </button>
-            </div>
 
-            <button
-              onClick={shareOnX}
-              className="w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
-              style={{
-                background: "rgba(0, 0, 0, 0.3)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#f5eef0",
-                fontSize: "14px",
-                fontFamily: "Inter, sans-serif",
-                cursor: "pointer",
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-              Share on X
-            </button>
-
-            <div className="text-center">
+              {/* Reset */}
               <button
-                onClick={() => { setStep("form"); setPfpFile(null); setPfpPreview(""); setUsername(""); setCardId(""); setCardPfpUrl(""); }}
-                style={{ color: "#7a5560", fontSize: "13px", fontFamily: "'Space Mono', monospace", cursor: "pointer", background: "none", border: "none" }}
+                onClick={reset}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "6px",
+                  color: "rgba(196,160,171,0.4)", fontFamily: "'Space Mono', monospace", fontSize: "11px",
+                  letterSpacing: "0.1em", transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(196,160,171,0.7)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(196,160,171,0.4)")}
               >
-                ← Generate another card
+                <RotateCcw size={12} /> GENERATE ANOTHER
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </main>
+
+        {/* Footer */}
+        <footer style={{
+          textAlign: "center", padding: "20px",
+          borderTop: "1px solid rgba(196,160,171,0.06)",
+        }}>
+          <span className="eyebrow">built on seismic · micmic card · 2025</span>
+        </footer>
       </div>
 
       {/* Toast */}
       {toast && (
-        <div
-          className="toast fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl z-50"
-          style={{
-            background: "rgba(61, 40, 49, 0.95)",
-            border: "1px solid rgba(196, 160, 171, 0.3)",
-            color: "#f5eef0",
-            fontFamily: "'Space Mono', monospace",
-            fontSize: "13px",
-            backdropFilter: "blur(10px)",
-          }}
-        >
+        <div className="anim-fade-up" style={{
+          position: "fixed", bottom: "28px", left: "50%", transform: "translateX(-50%)",
+          background: "rgba(26,13,19,0.92)", backdropFilter: "blur(16px)",
+          border: "1px solid rgba(196,160,171,0.2)", borderRadius: "12px",
+          padding: "11px 20px", zIndex: 100,
+          fontFamily: "'Space Mono', monospace", fontSize: "12px",
+          color: "#f0e6ea", letterSpacing: "0.05em",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          whiteSpace: "nowrap",
+        }}>
           {toast}
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="py-6 text-center border-t" style={{ borderColor: "rgba(130, 90, 109, 0.15)" }}>
-        <div style={{ color: "#4e2d3a", fontSize: "11px", fontFamily: "'Space Mono', monospace" }}>
-          built on seismic · micmic card · 2025
-        </div>
-      </footer>
-    </main>
+    </>
   );
 }
