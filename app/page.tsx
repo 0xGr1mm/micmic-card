@@ -27,6 +27,7 @@ export default function Home() {
   const fileRef = useRef<HTMLInputElement>(null);
   const tier = getTierByLevel(magnitude);
 
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3000);

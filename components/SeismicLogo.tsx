@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 
+
 export function SeismicIcon({ className = "", color = "#825A6D", size = 40 }: { className?: string; color?: string; size?: number }) {
   return (
     <svg

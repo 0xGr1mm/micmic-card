@@ -4,8 +4,8 @@ import { MAGNITUDE_TIERS } from "@/lib/magnitude";
 
 interface Props { selected: number; onChange: (n: number) => void; }
 
-const ICONS = ["◈","◉","◆","◈","◉","◆","★"];
-const RICHTER = ["1–2","2–3","3–4","4–5","5–6","6–7","7+"];
+const ICONS = ["◈","◉","◆","◈","◉","◆","★","✦","✹"];
+const RICHTER = ["1–2","2–3","3–4","4–5","5–6","6–7","7–8","8–9","9+"];
 
 export default function MagnitudeSelector({ selected, onChange }: Props) {
   const tier = MAGNITUDE_TIERS.find(t => t.level === selected);
@@ -15,7 +15,7 @@ export default function MagnitudeSelector({ selected, onChange }: Props) {
       <p className="eyebrow">your magnitude tier</p>
 
       {/* Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-9 gap-2">
         {MAGNITUDE_TIERS.map((t) => (
           <button
             key={t.level}
